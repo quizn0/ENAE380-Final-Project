@@ -1,0 +1,141 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name ="euclid_thruster">
+
+    <xacro:macro name="euclid_thruster" params=" prefix parent number *origin *inertia">
+
+        <material name="${prefix}_black">
+            <color rgba="0 0 0 1"/>
+        </material>
+
+        <!-- Dimensions for robot body -->
+        <xacro:property name="thruster_length" value="0.1715"/>
+        <xacro:property name="thruster_width" value="0.0889"/>
+        <xacro:property name="thruster_height" value="0.0889"/>
+        <xacro:property name="thruster_mass" value="0.7705"/>
+        <xacro:property name="propeller_rad" value="0.095"/>
+        <xacro:property name="propeller_length" value="0.05725"/>
+
+        <link name="${prefix}">
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${thruster_width} ${thruster_height} ${thruster_length} "/>
+                </geometry>
+                <material name="${prefix}_black"/>
+            </visual>
+
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${thruster_width} ${thruster_height} ${thruster_length} "/>
+                </geometry>
+            </collision>
+
+            <inertial>
+                <mass value="${thruster_mass}" />
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <inertia ixx="0.00790321" ixy="0" ixz="0"
+                         iyx="0" iyy="0.00790321" iyz="0.0" izz="0.1580642"/>
+            </inertial>
+        </link>
+
+        
+        <joint name="${prefix}_to_chassie" type="continuous">
+            <xacro:insert_block name="origin" />
+            <axis xyz="0 0 1" />
+            <parent link="chassie" />
+            <child link="${prefix}" />
+        </joint>
+        
+        <!--
+        <gazebo reference='thruster1_to_chassie'>
+            <preserveFixedJoint>true</preserveFixedJoint>
+        </gazebo>
+        -->
+        
+        <!--
+        <joint name="${prefix}_to_chassie" type="continuous">
+            <xacro:insert_block name="origin" />
+            <axis xyz="0 0 1" />
+            <parent link="chassie" />
+            <child link="${prefix}"/>
+        </joint>
+        -->
+
+        <!---
+       <joint name="${prefix}_to_chassie" type="prismatic">
+            <parent link="chassie"/>
+            <child link="${prefix}"/>
+            <limit effort="1000.0" lower="-0.38" upper="0" velocity="0.5"/>
+            <origin rpy="0 0 0" xyz="0 0 10"/>
+       </joint>
+        -->
+        <gazebo>
+             <!-- Thruster ROS plugin -->
+            <robotNamespace>euclid</robotNamespace>
+            <plugin name="${prefix}_model" filename="libuuv_thruster_ros_plugin.so">
+                <!-- Name of the thruster link -->
+                <linkName>${prefix}</linkName>
+
+                <!-- Name of the joint between thruster and vehicle base link -->
+                <jointName>${prefix}_to_chassie</jointName>
+
+                <!-- Gain of the input command signal -->
+                <gain>1</gain>
+
+                <!-- Maximum allowed input value for the input signal for thruster unit -->
+                <clampMax>0</clampMax>
+
+                <!-- Minimum allowed value for the input signal for thruster unit -->
+                <clampMin>0</clampMin>
+
+                <!-- Minimum and maximum thrust force output allowed -->
+                <thrustMin>0</thrustMin>
+                <thrustMax>0</thrustMax>
+
+                <!--
+                Value from 0 to 1 to set the efficiency of the output thrust force
+                Default value is 1.0
+                -->
+                <thrust_efficiency>1</thrust_efficiency>
+
+                <!--
+                Value from 0 to 1 to set the efficiency of the propeller as a factor
+                to be multiplied to the current value of the state variable at each
+                iteration.
+                Default value is 1.0
+                -->
+                <propeller_efficiency>1</propeller_efficiency>
+
+                <dynamics>
+                    <type>Bessa</type>
+                    <Jmsp>Jmsp</Jmsp>
+                    <Kv1>Kv1</Kv1>
+                    <Kv2>Kv2</Kv2>
+                    <Kt>Kt</Kt>
+                    <Rm>Rm</Rm>
+                </dynamics>
+
+                <conversion>
+                    <type>LinearInterp</type>
+                    <inputValues>0 1 2 3 (replace the input rotor angular velocity values)</inputValues>
+                    <outputValues>0 1 2 3 (replace the output thrust force output)</outputValues>
+                </conversion>
+            </plugin>
+        </gazebo>
+
+        <!--
+        <transmission name="thruster_trans">
+            <type>transmission_interface/SimpleTransmission</type>
+            <actuator name="motor1">
+            <mechanicalReduction>1</mechanicalReduction>
+            <hardwareInterface>EffortJointInterface</hardwareInterface>
+            </actuator>
+            <joint name="${prefix}">
+                <hardwareInterface>EffortJointInterface</hardwareInterface>
+            </joint>
+        </transmission> -->
+
+    </xacro:macro>
+</robot>

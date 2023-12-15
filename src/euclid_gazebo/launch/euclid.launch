@@ -1,0 +1,32 @@
+<launch>
+    <arg name="gazebo_gui" default="true"/>
+    <arg name="robot_name" default="euclid"/>
+    <arg name="address" default="$(find euclid_core)/urdf/$(arg robot_name).urdf.xacro"/>
+
+    <param name="euclid/robot_description" command="$(find xacro)/xacro $(arg address)" />
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find euclid_gazebo)/worlds/euclidworld"/>
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="$(arg gazebo_gui)"/>
+        <arg name="recording" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+<!-- Location where to have our robot spawn -->
+    <arg name="x" default="2" />
+    <arg name="y" default="2" />
+    <arg name="z" default="5" />
+    <arg name="yaw" default="0" />
+
+    <!-- Actually summons robot -->
+    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" ns="euclid"
+        args="-urdf -model $(arg robot_name) -param robot_description
+                -x $(arg x) -y $(arg y) -z $(arg z) -R 0 -P 0 -Y $(arg yaw)" />
+
+    <!-- convert joint states to TF transforms for rviz, etc -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+        respawn="false" output="screen" ns="euclid">
+    </node>
+
+</launch>

@@ -1,0 +1,19 @@
+<!-- A simple file to convert xacro to URDF's and visualize them in Rviz -->
+<!-- Minor modification of launch file in urdf_tutorials package -->
+<launch>
+
+  <arg name= "robotNamespace" default="euclid" />
+  <arg name="robot_name" default="euclid"/>
+  <arg name="gui" default="true" />
+  <arg name="rvizconfig" default="$(find euclid_core)/config/urdf.rviz" />
+
+  <arg name="address" default="$(find euclid_core)/urdf/$(arg robot_name).urdf.xacro"/>
+
+  <param name="robot_description" command="rosrun xacro xacro $(arg address)" />
+
+  <node if="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" />
+  <node unless="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+</launch>
