@@ -1,0 +1,215 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name ="euclid">
+
+    <gazebo>
+        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+            <robotNamespace>euclid</robotNamespace>
+        </plugin>
+    </gazebo>
+
+    <material name="white">
+        <color rgba="1 1 1 1"/>
+    </material>
+
+    <xacro:include filename="$(find euclid_core)/urdf/euclid_thruster.urdf.xacro"/>
+    <xacro:include filename="$(find euclid_core)/urdf/euclid_default.xacro"/>
+
+    <xacro:arg name="debug" default="0"/>
+
+    <!-- Vehicle's namespace -->
+    <xacro:arg name="namespace" default="euclid"/>
+
+
+    <xacro:property name="PI" value="3.1415926535897931" />
+    <!-- Dimensions for robot body -->
+    <xacro:property name="euclid_length" value="0.483"/>
+    <xacro:property name="euclid_width" value="0.483"/>
+    <xacro:property name="euclid_height" value="0.483"/>
+    <xacro:property name="euclid_mass" value="5"/>  <!--supposed to be 22.68-->
+
+    <xacro:property name="thruster_x_property" value="0.2415"/>
+    <xacro:property name="thruster_y_property" value="0.2415"/>
+    <xacro:property name="thruster_z_property" value="0.2415"/>
+    <xacro:property name="thruster_t" value="0.0889"/>
+    
+    <link name="base_link">
+        <inertial>
+            <mass value="1" />
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <inertia ixx="0" ixy="0" ixz="0"
+                    iyy="0" iyz="0"
+                    izz="0" />
+        </inertial>
+    </link>
+
+    <link name="chassie">
+        <visual>
+            <origin xyz="0 0 0.2415" rpy="0 0 0"/>
+            <geometry>
+                <box size="${euclid_length} ${euclid_width} ${euclid_height}"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+            <collision>
+            <origin xyz="0 0 0.2415" rpy="0 0 0"/>
+            <geometry>
+                <box size="${euclid_length} ${euclid_width} ${euclid_height}"/>
+            </geometry>
+        </collision>
+        <inertial>
+        <mass value="${euclid_mass}" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="1" ixy="0" ixz="0"
+                 iyy="1" iyz="0" izz="1"/>
+        </inertial>
+
+    </link>
+
+    
+    <gazebo reference="chassie">
+        <selfCollide>false</selfCollide>
+    </gazebo>
+    
+    
+    <joint name="reality_glue" type="fixed">
+        <parent link="base_link"/>
+        <child link="chassie"/>
+    </joint>
+
+    <xacro:euclid_thruster prefix="thruster1" parent="chassie" number ="1">
+        <origin xyz="0 0 -${thruster_t/2}" rpy="-${PI/2} 0 0"/>
+        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+    </xacro:euclid_thruster>
+
+     <xacro:euclid_thruster prefix="thruster2" parent="chassie" number ="2">
+        <origin xyz="0 0 ${2*thruster_z_property+thruster_t/2}" rpy="${PI/2} 0 0"/>
+        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+    </xacro:euclid_thruster>
+
+    <xacro:euclid_thruster prefix="thruster3" parent="chassie" number ="2">
+        <origin xyz="0 ${thruster_y_property+thruster_t/2} ${thruster_z_property}" rpy="0 ${PI/2} 0"/>
+        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+    </xacro:euclid_thruster>
+
+     <xacro:euclid_thruster prefix="thruster4" parent="chassie" number ="2">
+        <origin xyz="${thruster_x_property+thruster_t/2} 0 ${thruster_z_property}" rpy="0 0 ${PI/2}"/>
+        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+    </xacro:euclid_thruster>
+
+     <xacro:euclid_thruster prefix="thruster5" parent="chassie" number ="2">
+        <origin xyz="0 -${thruster_y_property+thruster_t/2} ${thruster_z_property}" rpy="0 -${PI/2} 0"/>
+        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+    </xacro:euclid_thruster>
+
+    <xacro:euclid_thruster prefix="thruster6" parent="chassie" number ="2">
+        <origin xyz="-${thruster_x_property+thruster_t/2} 0 ${thruster_z_property}" rpy="0 0 ${PI/2}"/>
+        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+    </xacro:euclid_thruster> 
+
+    <xacro:include filename="euclid_colors_gazebo.xacro" />
+
+                
+                <!--Weird shit-->
+    <xacro:dummy_link name="ned_link" />
+
+    <joint name="ned_joint" type="revolute">
+        <!-- This is revolute and not static since gazebo would remove ned_link -->
+        <origin xyz="0 0 0" rpy="${pi} 0 0"/>
+        <parent link="base_link"/>
+        <child link="ned_link"/>
+        <limit effort="0" lower="0" upper="0" velocity="0"/>
+    </joint>
+
+    <gazebo>
+      <plugin name="euclid_hydrodynamic_plugin" filename="libunderwater_object_ros_plugin.so">
+        <!-- Fluid density to be used in the computation of buoyancy forces
+        for all links specified below -->
+        <fluid_density>1000</fluid_density>
+
+        <!-- Name of the current velocity topic -->
+        <flow_velocity_topic>hydrodynamics/current_velocity</flow_velocity_topic>
+
+        <debug>0</debug>
+
+        <!-- List of hydrodynamic models this robot's links -->
+        <link name="chassie">
+          <!-- This flag will make the link neutrally buoyant -->
+          <neutrally_buoyant>0</neutrally_buoyant>
+
+          <!-- Link's volume -->
+          <volume>${euclid_length}*${euclid_width}*${euclid_height}</volume>
+
+          <!-- Link's bounding box, it is used to recalculate the immersed
+          volume when close to the surface.
+          This is a workaround the invalid bounding box given by Gazebo-->
+          <box>
+            <width>1000</width>
+            <length>1000</length>
+            <height>1000</height>
+          </box>
+
+          <!-- Center of buoyancy -->
+          <center_of_buoyancy>0 0 0</center_of_buoyancy>
+
+          <!-- Fossen's equation of motion -->
+          <hydrodynamic_model>
+            <type>fossen</type>
+            <added_mass>
+              0 0 0 0 0 0
+              0 0 0 0 0 0
+              0 0 0 0 0 0
+              0 0 0 0 0 0
+              0 0 0 0 0 0
+              0 0 0 0 0 0
+            </added_mass>
+            <!--
+            The linear damping coefficients can be provided as a diagonal (6 elements)
+            or a full matrix (36 coefficients), like the added-mass coefficients above
+            -->
+            <linear_damping>
+              0 0 0 0 0 0
+            </linear_damping>
+          </hydrodynamic_model>
+
+        </link>
+      </plugin>
+    </gazebo>
+
+    <!-- Joint state publisher plugin -->
+    <gazebo>
+        <plugin name="joint_state_publisher" filename="libjoint_state_publisher.so">
+        <robotNamespace>$(arg namespace)</robotNamespace>
+        <updateRate>50</updateRate>
+        </plugin>
+    </gazebo>
+
+    <gazebo>
+		<plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+			<alwaysOn>true</alwaysOn>
+			<bodyName>thruster1</bodyName>
+			<!--<frameName>thruster1</frameName>-->
+			<topicName>euclid_imu</topicName>
+			<serviceName>imu_service</serviceName>
+			<gaussianNoise>0.0</gaussianNoise>
+			<updateRate>0</updateRate>
+			<imu>
+				<noise>
+					<type>gaussian</type>
+					<rate>
+						<mean>0.0</mean>
+						<stddev>2e-4</stddev>
+						<bias_mean>0.0000075</bias_mean>
+						<bias_stddev>0.0000008</bias_stddev>
+					</rate>
+					<accel>
+						<mean>0.0</mean>
+						<stddev>1.7e-2</stddev>
+						<bias_mean>0.1</bias_mean>
+						<bias_stddev>0.001</bias_stddev>
+					</accel>
+				</noise>
+			</imu>
+		</plugin>
+	</gazebo>
+
+</robot>

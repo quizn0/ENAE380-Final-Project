@@ -1,0 +1,5 @@
+<launch>
+
+  <node pkg="rosservice" type="rosservice" name="force" args="call /gazebo/apply_body_wrench '{body_name: euclid , wrench: { force: { x: 0, y: 0 , z: 100 } }}'"/>
+
+</launch>

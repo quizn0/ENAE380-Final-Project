@@ -1,0 +1,12 @@
+<!-- A simple file to visualize URDFs-->
+<launch>
+
+    <!-- Name of file to be viewed. Must define robot_name -->
+    <arg name="robot_name" default="testrover"/>
+    <arg name="use_gui" default="true"/>
+
+    <param name="robot_description" textfile="$(find bigidea_robots)/$(arg robot_name)/urdf/$(arg robot_name).urdf"/>
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+
+</launch>
